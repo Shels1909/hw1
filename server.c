@@ -148,7 +148,21 @@ int accept_client( int server_socket_fd ) {
 		 ------------------------------------------------------
 		 */
 		
+		// create a pointer to the request
+		char* p1 = request;
+		char* p2 = request;
+		
+
+		// See if the first word is GET or POST
+		int i;
+
+		for(i = 0; i < strlen(request); i++){
+			if(*p1 == ' ')
+			        printf("%c\n", *p1);
+			p1 ++;
+		}
 		// THIS IS AN EXAMPLE ENTITY BODY
+		
 		char* entity_body = "<html><body><h2>CSCI 340 (Operating Systems) Project 1</h2><table border=1 width=\"50%\"><tr><th>Key</th><th>Value</th></tr></table></body></html>";
 		
 		char response[512];
@@ -156,7 +170,7 @@ int accept_client( int server_socket_fd ) {
 		
 		if ( DEBUG ) printf( "%s\n", response );
 		
-    	write( client_socket_fd, response, strlen( response ) );
+		send( client_socket_fd, response, strlen( response ), 0 );
 		
 		close( client_socket_fd );
 		
