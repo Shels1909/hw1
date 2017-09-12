@@ -73,6 +73,30 @@ int bind_port( unsigned int port_number ) {
 // Return:      Termination status of client
 //				( 0 = No Errors, -1 = Error )
 //
+char* get_method(char* p1, char* p2){
+
+	int len = strlen(p1); 
+	int i;
+	char* method;
+	for(i = 0; i < len;  i++){
+	// if we are pointing at a space character we need to process the
+	// word we have just looped over
+		if(*p1 == ' '){
+			*p1 = '\0';
+			method = p2;
+			p1 ++;
+			p2 = p1;
+			break;
+	}
+
+		p1 ++;
+	}
+
+	printf("p1: %s\n", p1);
+	printf("p2: %s\n", p2);
+	return method;
+
+}
 int accept_client( int server_socket_fd ) {
 
 	int exit_status = OK;
@@ -154,13 +178,29 @@ int accept_client( int server_socket_fd ) {
 		
 
 		// See if the first word is GET or POST
-		int i;
+		//int i;
+		//int len = strlen(request);
 
-		for(i = 0; i < strlen(request); i++){
-			if(*p1 == ' ')
-			        printf("%c\n", *p1);
+		char* method = get_method(p1, p2);
+		printf("method: %s\n", method);
+		printf("p1: %s\n", p1);
+		printf("p2: %s\n", p2);
+
+/*
+		for(i = 0; i < len;  i++){
+			// if we are pointing at a space character we need to process the
+			// word we have just looped over
+			if(*p1 == ' '){
+				*p1 = '\0';
+			        printf("word:%s\n", p2);
+				p1 ++;
+				p2 = p1;
+			}
+
 			p1 ++;
 		}
+		*/
+
 		// THIS IS AN EXAMPLE ENTITY BODY
 		
 		char* entity_body = "<html><body><h2>CSCI 340 (Operating Systems) Project 1</h2><table border=1 width=\"50%\"><tr><th>Key</th><th>Value</th></tr></table></body></html>";
