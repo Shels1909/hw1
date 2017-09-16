@@ -13,6 +13,7 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "server.h"
 
 // ------------------------------------
@@ -63,27 +64,38 @@ int bind_port( unsigned int port_number ) {
 
 } // end bind_port function
 
-// ------------------------------------
-// Function prototype that accepts a client
-// socket connection
-// 
-//
-// Arguments:	server file descriptor
-//
-// Return:      Termination status of client
-//				( 0 = No Errors, -1 = Error )
-//
-char* get_method(char* p1, char* p2){
 
-	int len = strlen(p1); 
+char* get_next_word(char** p1, char delimiter){
+
+    char* p2 = *p1;
+    int len = strlen(*p1);
+    int i;
+    char* word;
+    for(i = 0; i < len; i++){
+
+        if(*(*p1) == delimiter){
+            *(*p1) = '\0';
+            word = p2;
+            (*p1) = (*p1) + 1; 
+            p2 = *p1;
+            break;
+            
+        }
+ //       printf("p**: %c\n", *(*p1));
+
+        (*p1) = (*p1) + 1; 
+    }
+    return word;
+}
+/*	int len = strlen(p1); 
 	int i;
-	char* method;
+	char* word;
 	for(i = 0; i < len;  i++){
 	// if we are pointing at a space character we need to process the
 	// word we have just looped over
 		if(*p1 == ' '){
 			*p1 = '\0';
-			method = p2;
+			word = p2;
 			p1 ++;
 			p2 = p1;
 			break;
@@ -94,33 +106,45 @@ char* get_method(char* p1, char* p2){
 
 	printf("p1: %s\n", p1);
 	printf("p2: %s\n", p2);
-	return method;
+	return word;
+       */
 
-}
+
+
+// ------------------------------------
+// Function prototype that accepts a client
+// socket connection
+// 
+//
+// Arguments:	server file descriptor
+//
+// Return:      Termination status of client
+//				( 0 = No Errors, -1 = Error )
 int accept_client( int server_socket_fd ) {
 
-	int exit_status = OK;
+            int exit_status = OK;
 
-	int client_socket_fd = -1;
+                int client_socket_fd = -1;
 
-	socklen_t client_length; 
+                socklen_t client_length; 
 
-	struct sockaddr_in client_address;
+                struct sockaddr_in client_address;
 
-	char request[512];
+                char request[512];
 
-	client_length = sizeof( client_address );
+                client_length = sizeof( client_address );
 
-    client_socket_fd = accept( server_socket_fd, (struct sockaddr *) &client_address, &client_length );
-		
-	// -------------------------------------
-	// TODO:
-	// -------------------------------------
-	// Modify code to fork a child process
-	// -------------------------------------
-	
-	if ( client_socket_fd >= 0 ) {
-		
+                client_socket_fd = accept( server_socket_fd, (struct sockaddr *) &client_address, &client_length );
+                                        
+                                    // -------------------------------------
+                                    //  // TODO:
+                                    //          // -------------------------------------
+                                    //                  // Modify code to fork a child process
+                                    //                          // -------------------------------------
+                                    //                                  
+                                    //
+              if ( client_socket_fd >= 0 ) {
+                                    
 		bzero( request, 512 );
 		
 		read( client_socket_fd, request, 511 );
@@ -172,35 +196,66 @@ int accept_client( int server_socket_fd ) {
 		 ------------------------------------------------------
 		 */
 		
-		// create a pointer to the request
-		char* p1 = request;
-		char* p2 = request;
-		
 
 		// See if the first word is GET or POST
-		//int i;
-		//int len = strlen(request);
 
-		char* method = get_method(p1, p2);
-		printf("method: %s\n", method);
-		printf("p1: %s\n", p1);
-		printf("p2: %s\n", p2);
+		char* p1 = request;
+		char* method = get_next_word(&p1, ' ');
+                char* resource = get_next_word(&p1, ' ');
+                printf("p1: %s\n",p1 );
+            
+                
 
-/*
-		for(i = 0; i < len;  i++){
+		/*for(i = 0; i < len;  i++){
 			// if we are pointing at a space character we need to process the
 			// word we have just looped over
 			if(*p1 == ' '){
 				*p1 = '\0';
-			        printf("word:%s\n", p2);
+			        printf("method:%s\n", p2);
+				method = p2;
 				p1 ++;
 				p2 = p1;
+				break;
 			}
 
 			p1 ++;
-		}
-		*/
+		}*/
+		
+		if(strcmp(method,"GET") == 0){
 
+                        // Process the requested resource
+                        int i;
+                        for(i = 0; i < strlen(resource); i++){
+                            if(*resource == '?'){
+                                resource++;
+                                printf("before:%s\n", resource);
+                                char* key1 = get_next_word(&resource, '=');
+                                printf("key:%s\n", key1); 
+                                break;
+                            }
+
+                            else
+                                resource++;
+                        }
+
+                        char* value1 = get_next_word(&resource, '&');
+                        printf("value:%s\n", value1);
+                        char* key2 = get_next_word(&resource, '=');
+                        printf("key2:%s\n", key2);
+                        printf("resource:%s\n", resource);
+                        char* value2 = get_next_word(&resource, ' ');
+                        printf("value2:%s\n", value2);
+
+		}
+		else if(strcmp(method, "POST") == 0){
+
+			printf("PROCESS GET REQUEST\n");
+		}
+
+		else{
+			printf("INVALID HTTP REQUEST\n");
+			exit(-1);
+		}
 		// THIS IS AN EXAMPLE ENTITY BODY
 		
 		char* entity_body = "<html><body><h2>CSCI 340 (Operating Systems) Project 1</h2><table border=1 width=\"50%\"><tr><th>Key</th><th>Value</th></tr></table></body></html>";
