@@ -87,27 +87,14 @@ char* get_next_word(char** p1, char delimiter){
     }
     return word;
 }
-/*	int len = strlen(p1); 
-	int i;
-	char* word;
-	for(i = 0; i < len;  i++){
-	// if we are pointing at a space character we need to process the
-	// word we have just looped over
-		if(*p1 == ' '){
-			*p1 = '\0';
-			word = p2;
-			p1 ++;
-			p2 = p1;
-			break;
-	}
 
-		p1 ++;
-	}
 
-	printf("p1: %s\n", p1);
-	printf("p2: %s\n", p2);
-	return word;
-       */
+char* get_html_row(char* key, char* value){
+
+   sprintf(row, "<tr><th>%s</th><th>%s</th></tr>", key, value); 
+   printf("row: %s\n", row); 
+   return row;
+}
 
 
 
@@ -122,7 +109,7 @@ char* get_next_word(char** p1, char delimiter){
 //				( 0 = No Errors, -1 = Error )
 int accept_client( int server_socket_fd ) {
 
-            int exit_status = OK;
+                int exit_status = OK;
 
                 int client_socket_fd = -1;
 
@@ -182,69 +169,34 @@ int accept_client( int server_socket_fd ) {
 		/*
 		 ------------------------------------------------------
 		 POST method key/value pairs are located in the entity body of the request message
-		 ? - indicates the beginning of the key/value pairs
-		 & - is used to delimit multiple key/value pairs 
-		 = - is used to delimit key and value
-		 
-		 Example:
-		 
-		 first=brent&last=munsell
-		 
-		 two &'s indicated two key/value pairs (first=brent and last=munsell)
-		 key = first, value = brent
-		 key = last, value = munsell
-		 ------------------------------------------------------
-		 */
-		
+                 */
+                char* p1 = request;
+                char table[240]= "<table border=1 width=\"50%\">"; 
 
-		// See if the first word is GET or POST
+		char* method = strtok(p1, " ");
 
-		char* p1 = request;
-		char* method = get_next_word(&p1, ' ');
-                char* resource = get_next_word(&p1, ' ');
-                printf("p1: %s\n",p1 );
-            
-                
-
-		/*for(i = 0; i < len;  i++){
-			// if we are pointing at a space character we need to process the
-			// word we have just looped over
-			if(*p1 == ' '){
-				*p1 = '\0';
-			        printf("method:%s\n", p2);
-				method = p2;
-				p1 ++;
-				p2 = p1;
-				break;
-			}
-
-			p1 ++;
-		}*/
-		
 		if(strcmp(method,"GET") == 0){
 
-                        // Process the requested resource
-                        int i;
-                        for(i = 0; i < strlen(resource); i++){
-                            if(*resource == '?'){
-                                resource++;
-                                printf("before:%s\n", resource);
-                                char* key1 = get_next_word(&resource, '=');
-                                printf("key:%s\n", key1); 
-                                break;
-                            }
+                    printf("PROCESS GET REQUEST\n");
+                    // get the full uri
+                    char* resource  = strtok(NULL, " ");
+                    
+                    // see if their is key value pairs to process 
+                    char* tok  = strtok(resource, "?");
+                    
+                    // get unparsed key value pairs
+                    char* pairs = strtok(NULL, " ");
 
-                            else
-                                resource++;
-                        }
-
-                        char* value1 = get_next_word(&resource, '&');
-                        printf("value:%s\n", value1);
-                        char* key2 = get_next_word(&resource, '=');
-                        printf("key2:%s\n", key2);
-                        printf("resource:%s\n", resource);
-                        char* value2 = get_next_word(&resource, ' ');
-                        printf("value2:%s\n", value2);
+                    char* token;
+                    // seperate all the key value pairs
+                    while ((token = strsep(&pairs, "&"))){
+                        char* key = strtok(token, "=");
+                        printf("key: %s\n", key);
+                        char* value = strtok(NULL, "\0");
+                        printf("value: %s\n", value);
+                        add_to_table(key, value, &table);
+                    
+                    }
 
 		}
 		else if(strcmp(method, "POST") == 0){
