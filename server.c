@@ -161,6 +161,7 @@ int accept_client( int server_socket_fd ) {
 		 ------------------------------------------------------
 		 POST method key/value pairs are located in the entity body of the request message
                  */
+                
                 // copy request to p1 because we are going to mangle the request
                 char p1[strlen(request)];
                 strcpy(p1, request); 
@@ -177,10 +178,10 @@ int accept_client( int server_socket_fd ) {
 
                     printf("PROCESS GET REQUEST\n");
                     // get the full uri
-                    char* uri  = strtok(NULL, " ");
+                    //char* uri  = strtok(NULL, " ");
                     
                     // see if their is key value pairs to process 
-                    char*  resource = strchr(uri, '?') + 1; 
+                    char*  resource = strchr(p1, '?') + 1; 
                     
                     // get unparsed key value pairs
                     char* pairs = strtok(resource, " ");
