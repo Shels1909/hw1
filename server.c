@@ -81,19 +81,10 @@ char* get_next_word(char** p1, char delimiter){
             break;
             
         }
- //       printf("p**: %c\n", *(*p1));
 
         (*p1) = (*p1) + 1; 
     }
     return word;
-}
-
-
-char* get_html_row(char* key, char* value){
-
-   sprintf(row, "<tr><th>%s</th><th>%s</th></tr>", key, value); 
-   printf("row: %s\n", row); 
-   return row;
 }
 
 
@@ -123,13 +114,13 @@ int accept_client( int server_socket_fd ) {
 
                 client_socket_fd = accept( server_socket_fd, (struct sockaddr *) &client_address, &client_length );
                                         
-                                    // -------------------------------------
-                                    //  // TODO:
-                                    //          // -------------------------------------
-                                    //                  // Modify code to fork a child process
-                                    //                          // -------------------------------------
-                                    //                                  
-                                    //
+                // -------------------------------------
+                //  // TODO:
+                //          // -------------------------------------
+                //                  // Modify code to fork a child process
+                //                          // -------------------------------------
+                //                                  
+                //
               if ( client_socket_fd >= 0 ) {
                                     
 		bzero( request, 512 );
@@ -170,47 +161,69 @@ int accept_client( int server_socket_fd ) {
 		 ------------------------------------------------------
 		 POST method key/value pairs are located in the entity body of the request message
                  */
-                char* p1 = request;
-                char table[240]= "<table border=1 width=\"50%\">"; 
+                // copy request to p1 because we are going to mangle the request
+                char p1[strlen(request)];
+                strcpy(p1, request); 
+                 
+                // initialize table that will be filled with key value pairs
+                char table[240];
+                strcpy(table, "<table border=1 width=\"50%\"><tr><th>Key</th><th>Value</th></tr>");
 
-		char* method = strtok(p1, " ");
+
+                // get the HTTP method
+		char* method = strtok(request, " ");
 
 		if(strcmp(method,"GET") == 0){
 
                     printf("PROCESS GET REQUEST\n");
                     // get the full uri
-                    char* resource  = strtok(NULL, " ");
+                    char* uri  = strtok(NULL, " ");
                     
                     // see if their is key value pairs to process 
-                    char* tok  = strtok(resource, "?");
+                    char*  resource = strchr(uri, '?') + 1; 
                     
                     // get unparsed key value pairs
-                    char* pairs = strtok(NULL, " ");
+                    char* pairs = strtok(resource, " ");
 
                     char* token;
-                    // seperate all the key value pairs
+                    // while there are still key value pairs parse them into an html row 
                     while ((token = strsep(&pairs, "&"))){
                         char* key = strtok(token, "=");
-                        printf("key: %s\n", key);
                         char* value = strtok(NULL, "\0");
-                        printf("value: %s\n", value);
-                        add_to_table(key, value, &table);
-                    
+                        char row[240];
+                        sprintf(row, "<tr><td>%s</td><td>%s</td></tr>", key, value); 
+                        strcat(table, row);
                     }
-
+                    // close html table
+                    strcat(table, "</table>");
 		}
 		else if(strcmp(method, "POST") == 0){
 
-			printf("PROCESS GET REQUEST\n");
+			printf("PROCESS POST REQUEST\n");
+                        char* resource = strrchr(p1, '\n') + 1;
+                        printf("resource: %s\n", resource);
+                        char* token;
+                        // while there are still key value pairs parse them into an html row 
+                        while ((token = strsep(&resource, "&"))){
+                            char* key = strtok(token, "=");
+                            char* value = strtok(NULL, "\0");
+                            char row[240];
+                            sprintf(row, "<tr><td>%s</td><td>%s</td></tr>", key, value); 
+                            strcat(table, row);
+                    }
+                    // close html table
+                    strcat(table, "</table>");
+                        
 		}
 
 		else{
 			printf("INVALID HTTP REQUEST\n");
 			exit(-1);
 		}
-		// THIS IS AN EXAMPLE ENTITY BODY
 		
-		char* entity_body = "<html><body><h2>CSCI 340 (Operating Systems) Project 1</h2><table border=1 width=\"50%\"><tr><th>Key</th><th>Value</th></tr></table></body></html>";
+		char entity_body[512];  
+                // insert the table of key value pairs into entity body
+                sprintf(entity_body, "<html><body><h2>CSCI 340 (Operating Systems) Project 1</h2>%s</body></html>", table);
 		
 		char response[512];
 		sprintf( response, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s", (int)strlen( entity_body ), entity_body );
