@@ -65,30 +65,6 @@ int bind_port( unsigned int port_number ) {
 } // end bind_port function
 
 
-char* get_next_word(char** p1, char delimiter){
-
-    char* p2 = *p1;
-    int len = strlen(*p1);
-    int i;
-    char* word;
-    for(i = 0; i < len; i++){
-
-        if(*(*p1) == delimiter){
-            *(*p1) = '\0';
-            word = p2;
-            (*p1) = (*p1) + 1; 
-            p2 = *p1;
-            break;
-            
-        }
-
-        (*p1) = (*p1) + 1; 
-    }
-    return word;
-}
-
-
-
 // ------------------------------------
 // Function prototype that accepts a client
 // socket connection
@@ -177,11 +153,9 @@ int accept_client( int server_socket_fd ) {
 		if(strcmp(method,"GET") == 0){
 
                     printf("PROCESS GET REQUEST\n");
-                    // get the full uri
-                    //char* uri  = strtok(NULL, " ");
                     
                     // see if their is key value pairs to process 
-                    char*  resource = strchr(p1, '?') + 1; 
+                    char* resource = strchr(p1, '?') + 1; 
                     
                     // get unparsed key value pairs
                     char* pairs = strtok(resource, " ");
@@ -202,7 +176,7 @@ int accept_client( int server_socket_fd ) {
 
 			printf("PROCESS POST REQUEST\n");
                         char* resource = strrchr(p1, '\n') + 1;
-                        printf("resource: %s\n", resource);
+
                         char* token;
                         // while there are still key value pairs parse them into an html row 
                         while ((token = strsep(&resource, "&"))){
