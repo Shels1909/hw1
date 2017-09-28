@@ -104,7 +104,7 @@ static void sig_child_handler( int sig ) {
 	// You complete child signal handler code to remove child process from process 
 	// table (i.e. reap the child)
 	// -------------------------------------
-
-	
+        while(waitpid((pid_t)(-1), 0, WNOHANG) > 0){}
+        	
 
 } // end sig_child_handler function

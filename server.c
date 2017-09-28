@@ -86,6 +86,8 @@ int accept_client( int server_socket_fd ) {
 
                 char request[512];
 
+                pid_t pid;
+
                 client_length = sizeof( client_address );
 
                 client_socket_fd = accept( server_socket_fd, (struct sockaddr *) &client_address, &client_length );
@@ -138,77 +140,83 @@ int accept_client( int server_socket_fd ) {
 		 POST method key/value pairs are located in the entity body of the request message
                  */
                 
-                // copy request to p1 because we are going to mangle the request
-                char p1[strlen(request)];
-                strcpy(p1, request); 
-                 
-                // initialize table that will be filled with key value pairs
-                char table[240];
-                strcpy(table, "<table border=1 width=\"50%\"><tr><th>Key</th><th>Value</th></tr>");
+                if((pid = fork() ) == 0){      
 
+                    // close listenting socket
+                    close(server_socket_fd);
 
-                // get the HTTP method
-		char* method = strtok(request, " ");
+                    // copy request to p1 because we are going to mangle the request
+                    char p1[strlen(request)];
+                    strcpy(p1, request); 
+                     
+                    // initialize table that will be filled with key value pairs
+                    char table[240];
+                    strcpy(table, "<table border=1 width=\"50%\"><tr><th>Key</th><th>Value</th></tr>");
 
-		if(strcmp(method,"GET") == 0){
+                    // get the HTTP method
+                    char* method = strtok(request, " ");
 
-                    printf("PROCESS GET REQUEST\n");
-                    
-                    // see if their is key value pairs to process 
-                    char* resource = strchr(p1, '?') + 1; 
-                    
-                    // get unparsed key value pairs
-                    char* pairs = strtok(resource, " ");
+                    if(strcmp(method,"GET") == 0){
 
-                    char* token;
-                    // while there are still key value pairs parse them into an html row 
-                    while ((token = strsep(&pairs, "&"))){
-                        char* key = strtok(token, "=");
-                        char* value = strtok(NULL, "\0");
-                        char row[240];
-                        sprintf(row, "<tr><td>%s</td><td>%s</td></tr>", key, value); 
-                        strcat(table, row);
-                    }
-                    // close html table
-                    strcat(table, "</table>");
-		}
-		else if(strcmp(method, "POST") == 0){
-
-			printf("PROCESS POST REQUEST\n");
-                        char* resource = strrchr(p1, '\n') + 1;
+                        printf("PROCESS GET REQUEST\n");
+                        
+                        // see if their is key value pairs to process 
+                        char* resource = strchr(p1, '?') + 1; 
+                        
+                        // get unparsed key value pairs
+                        char* pairs = strtok(resource, " ");
 
                         char* token;
                         // while there are still key value pairs parse them into an html row 
-                        while ((token = strsep(&resource, "&"))){
+                        while ((token = strsep(&pairs, "&"))){
                             char* key = strtok(token, "=");
                             char* value = strtok(NULL, "\0");
                             char row[240];
                             sprintf(row, "<tr><td>%s</td><td>%s</td></tr>", key, value); 
                             strcat(table, row);
+                        }
+                        // close html table
+                        strcat(table, "</table>");
                     }
-                    // close html table
-                    strcat(table, "</table>");
-                        
-		}
+                    else if(strcmp(method, "POST") == 0){
 
-		else{
-			printf("INVALID HTTP REQUEST\n");
-			exit(-1);
-		}
-		
-		char entity_body[512];  
-                // insert the table of key value pairs into entity body
-                sprintf(entity_body, "<html><body><h2>CSCI 340 (Operating Systems) Project 1</h2>%s</body></html>", table);
-		
-		char response[512];
-		sprintf( response, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s", (int)strlen( entity_body ), entity_body );
-		
-		if ( DEBUG ) printf( "%s\n", response );
-		
-		send( client_socket_fd, response, strlen( response ), 0 );
-		
-		close( client_socket_fd );
-		
+                            printf("PROCESS POST REQUEST\n");
+                            char* resource = strrchr(p1, '\n') + 1;
+
+                            char* token;
+                            // while there are still key value pairs parse them into an html row 
+                            while ((token = strsep(&resource, "&"))){
+                                char* key = strtok(token, "=");
+                                char* value = strtok(NULL, "\0");
+                                char row[240];
+                                sprintf(row, "<tr><td>%s</td><td>%s</td></tr>", key, value); 
+                                strcat(table, row);
+                        }
+                        // close html table
+                        strcat(table, "</table>");
+                            
+                    }
+
+                    else{
+                            printf("INVALID HTTP REQUEST\n");
+                            exit(-1);
+                    }
+                    
+                    char entity_body[512];  
+                    // insert the table of key value pairs into entity body
+                    sprintf(entity_body, "<html><body><h2>CSCI 340 (Operating Systems) Project 1</h2>%s</body></html>", table);
+                    
+                    char response[512];
+                    sprintf( response, "HTTP/1.1 200 OK\r\nContent-Length: %d\r\n\r\n%s", (int)strlen( entity_body ), entity_body );
+                    
+                    if ( DEBUG ) printf( "%s\n", response );
+                    
+                    send( client_socket_fd, response, strlen( response ), 0 );
+                    close(client_socket_fd);
+                    exit(0);
+                }	
+                // parent closes client socket since the child is handling it
+                close( client_socket_fd );
 		
 	} else {
 		
